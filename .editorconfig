@@ -1,0 +1,10 @@
+﻿[*.cs]
+
+# IDE0008: Use explicit type
+dotnet_diagnostic.IDE0008.severity = none
+
+# LR0002: Prefix is incorrect
+dotnet_diagnostic.LR0002.severity = none
+
+# Default severity for analyzer diagnostics with category 'Parallelization'
+dotnet_analyzer_diagnostic.category-Parallelization.severity = none

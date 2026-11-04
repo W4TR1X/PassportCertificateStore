@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="src/PassportCertificateStore/PassportCertificateStore.csproj" Id="b4ed48ce-d13e-4856-88a4-298105275fcc" />
+</Solution>
