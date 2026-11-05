@@ -28,7 +28,7 @@ Master list signatures are left unverified, and eMRTD passive authentication is 
 
 ## Example Usage
 
-`PageUrl` must point to an HTML page that contains `var masterListFileURL = "<download url>"`.
+Published packages include a default `PageUrl`. You can omit `PageUrl` to use that default or override it as shown below. The URL must point to an HTML page that contains `var masterListFileURL = "<download url>"`.
 
 ```json
 {
@@ -62,8 +62,21 @@ var collection = await store.GetCertificateCollection();
 
 ## Providers
 
-- **Online**: Downloads the master list from the URL published on `PageUrl`. A newer version is detected by comparing the downloaded file name. The option default is a placeholder, so `PageUrl` must be set to a real page.
+- **Online**: Downloads the master list from the URL published on `PageUrl`. A newer version is detected by comparing the downloaded file name. Published packages include a default page URL; when building locally, set `PageUrl` in configuration because the source default is the `__PAGE_URL__` placeholder.
 - **Directory**: Registered when `Provider` is `Directory`. The `Directory` option defaults to `./Masterlist`. Loading from that folder is not implemented yet.
+
+## Publishing
+
+Add these repository secrets under **Settings → Secrets and variables → Actions**:
+
+- `PAGE_URL`: The default master list page URL to embed in the package.
+- `NUGET_API_KEY`: The API key used to publish to NuGet.org.
+
+The publishing workflow runs on pushes to `main`, tags matching `v*`, and manual dispatches. A tag such as `v1.2.3` publishes version `1.2.3`; other runs publish `0.1.0-preview.<run_number>`.
+
+Before the Release build, `qetza/replacetokens-action@v1` reads the URL from an environment variable populated from `PAGE_URL` and replaces `__PAGE_URL__` in `OnlineProviderOptions.cs`. The workflow stops if the secret is empty or exactly one token is not replaced. It then builds, packs, and publishes the package without committing the injected URL to the repository.
+
+This keeps the URL out of public source code, but the URL is embedded in the published DLL and can be extracted from it. Consumers can override the embedded default through `PassportCertificateStore:PageUrl`.
 
 ## License
 

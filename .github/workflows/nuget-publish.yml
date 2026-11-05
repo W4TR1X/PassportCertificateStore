@@ -1,0 +1,83 @@
+name: Build and Publish NuGet Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION="0.1.0-preview.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Validate PageUrl secret
+        env:
+          PAGE_URL: ${{ secrets.PAGE_URL }}
+        run: |
+          if [[ -z "${PAGE_URL//[[:space:]]/}" ]]; then
+            echo "::error::The PAGE_URL secret must not be empty."
+            exit 1
+          fi
+
+      - name: Inject PageUrl
+        id: inject_page_url
+        uses: qetza/replacetokens-action@v1
+        env:
+          PAGE_URL_VARIABLES: >-
+            {"PAGE_URL": ${{ toJSON(secrets.PAGE_URL) }}}
+        with:
+          sources: src/PassportCertificateStore/Providers/OnlineProvider/OnlineProviderOptions.cs
+          variables: '"$PAGE_URL_VARIABLES"'
+          token-pattern: doubleunderscores
+          escape: json
+          if-no-files-found: error
+          missing-var-log: error
+          no-telemetry: 'true'
+
+      - name: Verify PageUrl replacement
+        env:
+          TOKEN_COUNT: ${{ steps.inject_page_url.outputs.tokens }}
+          REPLACED_COUNT: ${{ steps.inject_page_url.outputs.replaced }}
+        run: |
+          if [[ "$TOKEN_COUNT" != "1" || "$REPLACED_COUNT" != "1" ]]; then
+            echo "::error::Expected exactly one PageUrl token and replacement."
+            exit 1
+          fi
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Pack
+        env:
+          PACKAGE_VERSION: ${{ steps.get_version.outputs.version }}
+        run: dotnet pack src/PassportCertificateStore/PassportCertificateStore.csproj --configuration Release --no-build --output ./nupkg /p:PackageVersion="$PACKAGE_VERSION"
+
+      - name: Publish NuGet package
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json
