@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Formats.Asn1;
+using System.Security.Cryptography;
 
 namespace PassportCertificateStore;
 
@@ -46,18 +47,46 @@ internal sealed class PassportCertificateStore(ILogger<PassportCertificateStore>
 
             var currentList = new List<X509Certificate2>();
             var currentCollection = new X509Certificate2Collection();
+            var certificateIndex = 0;
 
             while (certificateSet.HasData)
             {
                 var encodedValue = certificateSet.ReadEncodedValue();
-                var cert = X509CertificateLoader.LoadCertificate(encodedValue.ToArray());
+                certificateIndex++;
 
-                currentList.Add(cert);
-                currentCollection.Add(cert);
+                try
+                {
+                    var cert = X509CertificateLoader.LoadCertificate(encodedValue.ToArray());
+
+                    currentList.Add(cert);
+                    currentCollection.Add(cert);
+                }
+                catch (CryptographicException ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Unable to import masterlist certificate {CertificateIndex}. Skipping this certificate.",
+                        certificateIndex);
+                }
             }
 
             sequenceReader.ThrowIfNotEmpty();
             asnReader.ThrowIfNotEmpty();
+
+            if (currentList.Count == 0)
+            {
+                _logger.LogError("No masterlist certificates could be imported.");
+
+                if (list?.Count > 0)
+                {
+                    _logger.LogWarning("Using cached certificates because no new certificates could be imported.");
+                    return true;
+                }
+
+                return false;
+            }
+
+            _logger.LogInformation("Imported {ImportedCount} of {TotalCount} masterlist certificates.",
+                currentList.Count, certificateIndex);
 
             list?.Clear();
             collection?.Clear();

@@ -25,6 +25,7 @@ Master list signatures are left unverified, and eMRTD passive authentication is 
 - **CMS and ASN.1 Extraction**: Decodes the CMS SignedData container and reads the BER certificate set (`version` and `SET OF Certificate`).
 - **Dependency Injection**: Registers the store from the `PassportCertificateStore` configuration section.
 - **Cache Fallback**: Returns the cached certificates when a refresh or parse fails after a successful load.
+- **Per-Certificate Import**: Logs and skips certificates that the platform cannot import, while loading the remaining certificates. If none can be imported, returns cached certificates when available, otherwise `null`.
 
 ## Example Usage
 
