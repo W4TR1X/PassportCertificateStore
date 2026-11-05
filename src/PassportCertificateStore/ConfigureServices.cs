@@ -1,5 +1,4 @@
-﻿using PassportCertificateStore.Providers;
-using PassportCertificateStore.Providers.DirectoryProvider;
+﻿using PassportCertificateStore.Providers.DirectoryProvider;
 using PassportCertificateStore.Providers.OnlineProvider;
 
 namespace PassportCertificateStore;

@@ -1,19 +1,12 @@
-﻿using PassportCertificateStore.Providers;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Formats.Asn1;
 
 namespace PassportCertificateStore;
 
-internal sealed class PassportCertificateStore : IPassportCertificateStore
+internal sealed class PassportCertificateStore(ILogger<PassportCertificateStore> logger, IMasterlistProvider provider) : IPassportCertificateStore
 {
-    private readonly ILogger<PassportCertificateStore> _logger;
-    private readonly IMasterlistProvider _provider;
-    public PassportCertificateStore(ILogger<PassportCertificateStore> logger, IMasterlistProvider provider)
-    {
-        _provider = provider;
-        _logger = logger;
-    }
-
+    private readonly ILogger<PassportCertificateStore> _logger = logger;
+    private readonly IMasterlistProvider _provider = provider;
     private X509Certificate2Collection? collection;
     private List<X509Certificate2>? list;
 
@@ -22,7 +15,7 @@ internal sealed class PassportCertificateStore : IPassportCertificateStore
         if (list?.Count > 0)
         {
             var status = await _provider.IsNewerVersionAvailableAsync();
-            if (status != true) return true;
+            if (status is not true) return true;
         }
 
         var masterlistContent = await _provider.GetLatestVersionAsync();
@@ -66,8 +59,8 @@ internal sealed class PassportCertificateStore : IPassportCertificateStore
             sequenceReader.ThrowIfNotEmpty();
             asnReader.ThrowIfNotEmpty();
 
-            if (list is not null) list.Clear();
-            if (collection is not null) collection.Clear();
+            list?.Clear();
+            collection?.Clear();
 
             list = currentList;
             collection = currentCollection;
