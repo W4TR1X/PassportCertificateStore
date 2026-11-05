@@ -1,21 +1,13 @@
-﻿using PassportCertificateStore.Providers;
+﻿namespace PassportCertificateStore.Providers.DirectoryProvider;
 
-namespace PassportCertificateStore.Providers.DirectoryProvider;
-
-internal class DirectoryProvider : IMasterlistProvider
+internal class DirectoryProvider(ILogger<DirectoryProvider> logger, DirectoryProviderOptions options) : IMasterlistProvider
 {
     internal const string ProviderName = "Directory";
 
-    private readonly ILogger<DirectoryProvider> _logger;
-    private readonly DirectoryProviderOptions _options;
+    private readonly ILogger<DirectoryProvider> _logger = logger;
+    private readonly DirectoryProviderOptions _options = options;
 
-    public DirectoryProvider(ILogger<DirectoryProvider> logger, DirectoryProviderOptions options)
-    {
-        _logger = logger;
-        _options = options;
-    }
-
-    public Task<byte[]> GetLatestVersionAsync(CancellationToken cancellationToken = default)
+    public Task<byte[]?> GetLatestVersionAsync(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -2,5 +2,5 @@
 
 internal class OnlineProviderOptions
 {
-    public string PageUrl { get; set; } = "[{(-PageUrl-)}]";
+    public string PageUrl { get; set; } = "__PAGE_URL__";
 }

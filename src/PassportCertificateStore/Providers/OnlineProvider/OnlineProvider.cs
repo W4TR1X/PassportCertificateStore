@@ -2,27 +2,19 @@
 
 namespace PassportCertificateStore.Providers.OnlineProvider;
 
-internal class OnlineProvider : IMasterlistProvider
+internal class OnlineProvider(ILogger<OnlineProvider> logger, OnlineProviderOptions options
+        , IHttpClientFactory httpClientFactory) : IMasterlistProvider
 {
     internal const string ProviderName = "Online";
     internal const string CLIENT_NAME = "ICAOMasterlistReader";
 
-    private readonly ILogger<OnlineProvider> _logger;
-    private readonly OnlineProviderOptions _options;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<OnlineProvider> _logger = logger;
+    private readonly OnlineProviderOptions _options = options;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     private static readonly Regex MasterListUrlRegex
         = new(@"var masterListFileURL = ""([^""]+)"""
         , RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(10));
-
-    public OnlineProvider(ILogger<OnlineProvider> logger, OnlineProviderOptions options
-        , IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
-        _options = options;
-    }
-
     private string? latestDownloadedFileName;
     private byte[]? latestDownloadedFileContent;
 
@@ -42,8 +34,7 @@ internal class OnlineProvider : IMasterlistProvider
 
         if (masterListContent is null || masterListContent.Length == 0)
         {
-            _logger.LogError(
-                $"Failed to download the latest masterlist from '{downloadUrl}'.");
+            _logger.LogError("Failed to download the latest masterlist from '{DownloadUrl}'.", downloadUrl);
 
             return null;
         }
@@ -69,7 +60,7 @@ internal class OnlineProvider : IMasterlistProvider
     {
         if (latestDownloadedFileName != currentDownloadedFileName)
         {
-            _logger.LogInformation($"Newer version available: {currentDownloadedFileName}");
+            _logger.LogInformation("Newer version available: {CurrentDownloadedFileName}", currentDownloadedFileName);
             return true;
         }
 
@@ -86,8 +77,7 @@ internal class OnlineProvider : IMasterlistProvider
 
         if (string.IsNullOrEmpty(url))
         {
-            _logger.LogError(
-                $"Failed to find the masterlist URL in the response from '{_options.PageUrl}'.");
+            _logger.LogError("Failed to find the masterlist URL in the response from '{_optionsPageUrl}'.", _options.PageUrl);
 
             return null;
         }
