@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -28,7 +30,13 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
           else
-            VERSION="0.1.0-preview.${GITHUB_RUN_NUMBER}"
+            LATEST_TAG=$(git tag --list 'v*' --sort=-version:refname | awk '/^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && !found { print; found = 1 }')
+            NEXT_VERSION="0.1.0"
+            if [[ -n "$LATEST_TAG" ]]; then
+              IFS=. read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+              NEXT_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+            fi
+            VERSION="${NEXT_VERSION}-preview.${GITHUB_RUN_NUMBER}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 

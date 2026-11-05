@@ -72,7 +72,7 @@ Add these repository secrets under **Settings → Secrets and variables → Acti
 - `PAGE_URL`: The default master list page URL to embed in the package.
 - `NUGET_API_KEY`: The API key used to publish to NuGet.org.
 
-The publishing workflow runs on pushes to `main`, tags matching `v*`, and manual dispatches. A tag such as `v1.2.3` publishes version `1.2.3`; other runs publish `0.1.0-preview.<run_number>`.
+The publishing workflow runs on pushes to `main`, tags matching `v*`, and manual dispatches. A tag such as `v1.2.3` publishes version `1.2.3`. Other runs use the highest stable `v<major>.<minor>.<patch>` Git tag, increment its patch, and append `-preview.<run_number>`: after `v1.2.3`, build 125 publishes `1.2.4-preview.125`. Prerelease and unrelated tags are ignored when selecting the base version. If no stable tag exists, preview versions start at `0.1.0-preview.<run_number>`. Major and minor releases are selected explicitly through release tags.
 
 Before the Release build, `qetza/replacetokens-action@v1` reads the URL from an environment variable populated from `PAGE_URL` and replaces `__PAGE_URL__` in `OnlineProviderOptions.cs`. The workflow stops if the secret is empty or exactly one token is not replaced. It then builds, packs, and publishes the package without committing the injected URL to the repository.
 
